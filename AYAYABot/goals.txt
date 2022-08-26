@@ -1,0 +1,6 @@
+﻿GOALS FOR THIS BOT:
+
+1. Read chat messages and react to image attachments with the :AYAYA: emote
+2. Greet new people that join the server with an AYAYA message @ing them as well as using the AYAYA emotes/potentially the AYAYA image
+3. Spontaneously add /tts messages into chats it has permissions for saying AYAYA stuff
+4. Spontaneously join voice chats and play AYAYA audio
