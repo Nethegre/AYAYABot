@@ -14,6 +14,9 @@ namespace AYAYABot.events
         static public async Task messageCreated(DiscordClient discordClient, MessageCreateEventArgs message)
         {
             //Run message reaction methods on the received message
+
+            shutdownAyayaBot(message);
+
             sendAyayaEmote(message);
 
         }
@@ -41,6 +44,44 @@ namespace AYAYABot.events
                     }
 
                     break; //Don't need to check against the other ayaya triggers because we found one already
+                }
+            }
+        }
+
+        private static async void shutdownAyayaBot(MessageCreateEventArgs message)
+        {
+            ulong ownerGuid = Convert.ToUInt64(ConfigManager.config["ownerGuid"]);
+            string shutdownMessage = ConfigManager.config["shutdownMessage"];
+            string shutdownCommand = ConfigManager.config["shutdownCommand"];
+
+            //Determine if the message was sent by the "owner" of the bot based on the config
+            if (message.Author.Id == ownerGuid)
+            {
+                //Determine if the message contains the shutdown message
+                if (message.Message.Content.ToLower().Contains(shutdownCommand))
+                {
+                    log.info("Received shutdown command from owner [" + ownerGuid + "] in guild [" + message.Guild.Name + "]");
+
+                    //Retreive ayaya emote for the server
+                    DiscordEmoji ayayaEmote = GuildEmoteManager.retrieveAyayaEmoteForGuild(message.Guild.Id);
+
+                    if (ayayaEmote != null)
+                    {
+                        //Respond with a goodnight message + emote
+                        DiscordMessageBuilder responseMessage = new DiscordMessageBuilder()
+                            .WithContent(shutdownMessage+ $" {ayayaEmote}");
+                        responseMessage.WithReply(message.Message.Id);
+
+                        await responseMessage.SendAsync(message.Channel);
+                    }
+                    else
+                    {
+                        //Respond with a goodnight message
+                        await message.Message.RespondAsync(shutdownMessage);
+                    }
+
+                    //Shutdown the bot
+                    await Program.disconnectAndShutdown();
                 }
             }
         }

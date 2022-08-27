@@ -7,6 +7,12 @@ namespace AYAYABot
 {
     class Program
     {
+        //Class level variables
+        private static DiscordClient _client;
+
+        //Create an instance of the log manager class
+        readonly static LogManager log = new LogManager(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         static void Main(string[] args)
         {
             MainAsync().GetAwaiter().GetResult();
@@ -14,8 +20,6 @@ namespace AYAYABot
 
         static async Task MainAsync()
         {
-            //Create an instance of the log manager class
-            LogManager log = new LogManager(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
             //Create the discord config
             DiscordConfiguration discordConfig = new DiscordConfiguration();
@@ -27,25 +31,47 @@ namespace AYAYABot
             discordConfig.Intents = DiscordIntents.AllUnprivileged;
 
             //Create the discord client based on the config
-            DiscordClient discord = new DiscordClient(discordConfig);
+            _client = new DiscordClient(discordConfig);
 
-            //Add lambda events below
+            //Add lambda events below ----------------------------------------------------
 
             //Once the guild download has completed we are able to gather the emotes from the guilds
-            discord.GuildDownloadCompleted += GuildEmoteManager.startEmoteCollecting;
+            _client.GuildDownloadCompleted += GuildDownloadCompletedManager.GuildDownloadCompleted;
 
             //If a discord emoji is updated send it to the emote gatherer
-            discord.GuildEmojisUpdated += GuildEmoteManager.updateGuildEmojis;
+            _client.GuildEmojisUpdated += GuildEmoteManager.updateGuildEmojis;
+
+            //If a discord channel is added/updated run this
+            _client.ChannelCreated += GuildChannelManager.channelCreatedEvent;
 
             //Run our custom message created event handler
-            discord.MessageCreated += MessageCreatedEventHandler.messageCreated;
+            _client.MessageCreated += MessageCreatedEventHandler.messageCreated;
 
+            //Run the welcome event when a guild member is added
+            _client.GuildMemberAdded += GuildMemberAddedEventHandler.welcomeNewGuildMember;
+
+            //End lambda events ----------------------------------------------------------
 
             //Wait for the discord connection to happen
-            await discord.ConnectAsync();
+            await _client.ConnectAsync();
 
             //Allow this thread to go into the background
             await Task.Delay(-1);
+        }
+
+        //This method will be used to shutdown the bot
+        public static async Task disconnectAndShutdown()
+        {
+            log.info("Shutting down the discord bot.");
+
+            //Disconnect the bot cleanly from the discord server
+            await _client.DisconnectAsync();
+
+            //Dispose of the client resources
+            _client.Dispose();
+
+            //Send a sigterm signal to this program
+            System.Environment.Exit(-1);
         }
     }
 }

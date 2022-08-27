@@ -21,6 +21,13 @@
     <None Update="bottoken.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="resources\AYAYA.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="resources\" />
   </ItemGroup>
 
 </Project>
