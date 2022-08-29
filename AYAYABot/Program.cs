@@ -2,6 +2,7 @@
 using DSharpPlus;
 using AYAYABot.util;
 using AYAYABot.events;
+using AYAYABot.background;
 
 namespace AYAYABot
 {
@@ -44,16 +45,24 @@ namespace AYAYABot
             //If a discord channel is added/updated run this
             _client.ChannelCreated += GuildChannelManager.channelCreatedEvent;
 
+            //If a discord channel is removed run this
+            _client.ChannelDeleted += GuildChannelManager.channelDeletedEvent;
+
             //Run our custom message created event handler
             _client.MessageCreated += MessageCreatedEventHandler.messageCreated;
 
             //Run the welcome event when a guild member is added
             _client.GuildMemberAdded += GuildMemberAddedEventHandler.welcomeNewGuildMember;
 
+            //TODO Create lambda event to handle being added and removed to a new discord server
+
             //End lambda events ----------------------------------------------------------
 
             //Wait for the discord connection to happen
             await _client.ConnectAsync();
+
+            //Start background processes
+            await MainBackground.Startup(_client);
 
             //Allow this thread to go into the background
             await Task.Delay(-1);
@@ -63,6 +72,9 @@ namespace AYAYABot
         public static async Task disconnectAndShutdown()
         {
             log.info("Shutting down the discord bot.");
+
+            //Call the background process shutdown, we want this to run syncronously
+            MainBackground.Shutdown();
 
             //Disconnect the bot cleanly from the discord server
             await _client.DisconnectAsync();

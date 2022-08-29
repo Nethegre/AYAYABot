@@ -19,25 +19,25 @@ namespace AYAYABot.util
         public void error(string message)
         {
             StackTrace st = new StackTrace();
-            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name.Replace("d__2", "") + "] Error - " + message);
+            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name + "] Error - " + message);
         }
 
         public void warn(string message)
         {
             StackTrace st = new StackTrace();
-            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name.Replace("d__2", "") + "] Warn - " + message);
+            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name + "] Warn - " + message);
         }
 
         public void info(string message)
         {
             StackTrace st = new StackTrace();
-            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name.Replace("d__2", "") + "] Info - " + message);
+            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name + "] Info - " + message);
         }
 
         public void debug(string message)
         {
             StackTrace st = new StackTrace();
-            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name.Replace("d__2", "") + "] Debug - " + message);
+            Console.WriteLine("[" + className + "." + st.GetFrame(1).GetMethod().ReflectedType.Name + "] Debug - " + message);
         }
     }
 }

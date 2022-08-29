@@ -26,7 +26,7 @@ namespace AYAYABot.events
             log.info("Finished gathering guild emote information.");
         }
 
-        //Method to create the background thread that will process new emotes
+        //Method to add new emotes to the emote dictionary
         public static async Task updateGuildEmojis(DiscordClient discordClient, GuildEmojisUpdateEventArgs eventArgs)
         {
             //Check to make sure that the emote dictionary has an entry for the guild that made the update
