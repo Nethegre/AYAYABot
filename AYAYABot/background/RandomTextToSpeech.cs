@@ -14,9 +14,9 @@ namespace AYAYABot.background
         private static int randomTTSMaxTimer = Convert.ToInt32(ConfigManager.config["randomTTSMaxTimer"]);
         private static int randomTTSMinTimer = Convert.ToInt32(ConfigManager.config["randomTTSMinTimer"]);
         private static int randomTTSEventChance = Convert.ToInt32(ConfigManager.config["randomTTSEventChance"]);
-        private static string[] randomTTSMessages = ConfigManager.config["randomTTSMessages"].Split(";");
-
-        //TODO implement an "appropriate" time of day filter so that it doesn't send messages past a configurable time
+        private static string[] randomTTSMessages = ConfigManager.getConfigList("randomTTSMessages");
+        private static string randomTTSRestrictedTimeStart = ConfigManager.config["randomTTSRestrictedTimeStart"];
+        private static string randomTTSRestrictedTimeEnd = ConfigManager.config["randomTTSRestrictedTimeEnd"];
 
         //Start of processing method
         public static async Task RandomTTS(DiscordClient client)
@@ -26,8 +26,6 @@ namespace AYAYABot.background
             {
                 //Log the start of the random TTS task
                 log.info("Starting the random TTS background process");
-
-                //await Task.Delay(-1); //Return from the thread immediately //This needs to not exist
 
                 //Loop till the shutdown bool tells the process to stop
                 while (!MainBackground.shutdownProcess())
@@ -40,6 +38,14 @@ namespace AYAYABot.background
 
                     //Sleep for delay amount
                     Thread.Sleep(delay);
+
+                    //Check for restricted tts time and skip processing if it is during off hours for tts
+                    if (DateTime.Now > Convert.ToDateTime(randomTTSRestrictedTimeStart) && DateTime.Now < Convert.ToDateTime(randomTTSRestrictedTimeEnd))
+                    {
+                        //Don't process tts events as it is during "sleeping" hours
+                        log.debug("Prevented a tts event due to it being a time [" + DateTime.Now + "] during sleeping hours");
+                        continue;
+                    }
 
                     //Roll a randomizer based on settings to see if ayaya tts event actually happens
                     int eventNum = random.Next(0, 100);
