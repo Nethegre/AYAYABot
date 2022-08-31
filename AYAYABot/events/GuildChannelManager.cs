@@ -187,6 +187,124 @@ namespace AYAYABot.events
             }
         }
 
+        //Method that is activated when a guild is added to the bot
+        public static async Task guildAddedToBot(DiscordGuild guild)
+        {
+            List<DiscordChannel> tChannel = new List<DiscordChannel>();
+            List<DiscordChannel> vChannel = new List<DiscordChannel>();
+
+            //Loop through the channels that the guild contains
+            foreach (DiscordChannel channel in guild.Channels.Values)
+            {
+                //Determine if the channel is a text or voice channel
+                if (channel.Type == ChannelType.Text)
+                {
+                    //Add the channel to the list
+                    tChannel.Add(channel);
+                }
+                else if (channel.Type == ChannelType.Voice)
+                {
+                    //Add the channel to the list
+                    vChannel.Add(channel);
+                }
+            }
+
+            //Verify that the guild doesn't already exist in any of the channel lists
+            if (textChannels.Keys.Contains(guild.Id) || voiceChannels.Keys.Contains(guild.Id) || defaultTextChannels.Keys.Contains(guild.Id))
+            {
+                //Log warning that a guild was add to the bot that already existed in the channel lists
+                log.warn("New discord guild [" + guild.Name + "] was added to the bot that already existed in one of the channel lists.");
+            }
+
+            //Verifies that the guild has at least one text channel
+            if (tChannel.Count > 0)
+            {
+                //Add both channel lists to their dictionaries if the guild doesn't exist in the dictionary
+                if (textChannels.ContainsKey(guild.Id))
+                {
+                    //Replace the list of text channels as it is out of date
+                    textChannels[guild.Id] = tChannel;
+                }
+                else
+                {
+                    //Add a new entry to the dictionary
+                    textChannels.Add(guild.Id, tChannel);
+                }
+            }
+            else
+            {
+                log.warn("Attempted to retreive text channels from guild [" + guild.Name + "] but it has no text channels");
+            }
+
+            //Verifies that the guild has at least one voice channel
+            if (vChannel.Count > 0)
+            {
+                if (voiceChannels.ContainsKey(guild.Id))
+                {
+                    //Replace the list of voice channels as it is out of date
+                    voiceChannels[guild.Id] = vChannel;
+                }
+                else
+                {
+                    //Add a new entry to the dictionary
+                    voiceChannels.Add(guild.Id, vChannel);
+                }
+            }
+            else
+            {
+                log.warn("Attempted to retreive voice channels from guild [" + guild.Name + "] but it has no voice channels");
+            }
+
+            log.info("Retreived " + tChannel.Count + " text channels and " + vChannel.Count + " voice channels for guild [" + guild.Name + "]");
+
+            //Retreive the default text channel for each guild
+            if (defaultTextChannels.Keys.Contains(guild.Id))
+            {
+                //Replace the value
+                defaultTextChannels[guild.Id] = guild.GetDefaultChannel();
+            }
+            else
+            {
+                //Add a new value
+                defaultTextChannels.Add(guild.Id, guild.GetDefaultChannel());
+            }
+        }
+
+        //Method that is activated when a guild is removed from a bot
+        public static async Task guildRemoveFromBot(DiscordGuild guild)
+        {
+            //Verify that the guild had channel entries in one of the channel dictionaries
+            if (!textChannels.Keys.Contains(guild.Id) && !voiceChannels.Keys.Contains(guild.Id) && !defaultTextChannels.Keys.Contains(guild.Id))
+            {
+                //Log warning that a guild was removed from the bot that didn't have channels in any of the lists
+                log.warn("Guild [" + guild.Name + "] removed from the bot that didn't have any channels");
+            }
+            else
+            {
+                //Remove entries if they exist
+                if (textChannels.ContainsKey(guild.Id))
+                {
+                    log.info("Removed guild [" + guild.Name + "] text channels from dictionary.");
+
+                    textChannels.Remove(guild.Id);
+                }
+
+                if (voiceChannels.ContainsKey(guild.Id))
+                {
+                    log.info("Removed guild [" + guild.Name + "] voice channels from dictionary.");
+
+                    voiceChannels.Remove(guild.Id);
+                }
+
+                if (defaultTextChannels.ContainsKey(guild.Id))
+                {
+                    log.info("Removed guild [" + guild.Name + "] default text channel from dictionary.");
+
+                    defaultTextChannels.Remove(guild.Id);
+                }
+            }
+        }
+
         //Helper methods below
 
         public static List<DiscordChannel> retrieveDiscordChannelsByTypeAndGuildId(ulong id, ChannelType type)

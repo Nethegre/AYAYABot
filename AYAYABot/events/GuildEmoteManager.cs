@@ -46,6 +46,43 @@ namespace AYAYABot.events
             }
         }
 
+        //Method to remove a guild from the dictionary
+        public static async Task removeGuildFromDictionary(DiscordGuild guild)
+        {
+            //Check to make sure that the guild exists in the dictionary
+            if (guildEmoteDictionary.Keys.Contains(guild.Id))
+            {
+                //Remove the dictionary
+                log.info("Removing guild [" + guild.Name + "] emotes from dictionary.");
+
+                guildEmoteDictionary.Remove(guild.Id);
+            }
+            else
+            {
+                //Log a warning because there was an attempt to remove a guild when it wasn't in the dictionary already
+                log.warn("There was an attempt to remove a guilds emotes from the dictionary that didn't already exist in the dictionary.");
+            }
+        }
+
+        //Method to add a guild to the dictionary
+        public static async Task addGuildEmotesToDictionary(DiscordGuild guild)
+        {
+            //Check to make sure that the guild doesn't already exist in the dictionary
+            if (!guildEmoteDictionary.Keys.Contains(guild.Id))
+            {
+                //Add the guild entry and all emotes to the dictionary
+                guildEmoteDictionary.Add(guild.Id, new List<DiscordEmoji> (guild.Emojis.Values));
+            }
+            else
+            {
+                //Log a warning that a guild emotes addition is happening for a guild that already existed in the dictionary
+                log.warn("Attempt to add a new guild [" + guild.Name + "] to the emote dictionary but it already existed in the dictionary.");
+
+                //Update the emotes for the guild that already existed
+                guildEmoteDictionary[guild.Id] = new List<DiscordEmoji>(guild.Emojis.Values);
+            }
+        }
+
         //Helper methods below
 
         public static DiscordEmoji retrieveAyayaEmoteForGuild(ulong guildId)

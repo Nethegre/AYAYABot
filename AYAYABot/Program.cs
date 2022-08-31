@@ -54,7 +54,11 @@ namespace AYAYABot
             //Run the welcome event when a guild member is added
             _client.GuildMemberAdded += GuildMemberAddedEventHandler.welcomeNewGuildMember;
 
-            //TODO Create lambda event to handle being added and removed to a new discord server
+            //If this bot is added to a discord channel run this
+            _client.GuildCreated += GuildCreatedDeletedEventManager.guildCreatedEvent;
+
+            //If this bot is removed from a discord channel run this
+            _client.GuildDeleted += GuildCreatedDeletedEventManager.guildDeletedEvent;
 
             //End lambda events ----------------------------------------------------------
 
