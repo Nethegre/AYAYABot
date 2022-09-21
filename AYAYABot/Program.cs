@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using DSharpPlus;
+using DSharpPlus.VoiceNext;
 using AYAYABot.util;
 using AYAYABot.events;
 using AYAYABot.background;
@@ -34,6 +35,9 @@ namespace AYAYABot
             //Create the discord client based on the config
             _client = new DiscordClient(discordConfig);
 
+            //Enable the voice next libraries
+            _client.UseVoiceNext();
+
             //Add lambda events below ----------------------------------------------------
 
             //Once the guild download has completed we are able to gather the emotes from the guilds
@@ -47,6 +51,9 @@ namespace AYAYABot
 
             //If a discord channel is removed run this
             _client.ChannelDeleted += GuildChannelManager.channelDeletedEvent;
+
+            //TODO Add event to update channel list when a channels permissions are updated
+            _client.ChannelUpdated += GuildChannelManager.channelUpdatedEvent;
 
             //Run our custom message created event handler
             _client.MessageCreated += MessageCreatedEventHandler.messageCreated;

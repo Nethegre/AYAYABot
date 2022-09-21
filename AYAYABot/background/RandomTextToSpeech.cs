@@ -10,7 +10,7 @@ namespace AYAYABot.background
         //Create an instance of the log manager class
         readonly static LogManager log = new LogManager(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        //Retrieve min and max timer values from config
+        //Retreive config options
         private static int randomTTSMaxTimer = Convert.ToInt32(ConfigManager.config["randomTTSMaxTimer"]);
         private static int randomTTSMinTimer = Convert.ToInt32(ConfigManager.config["randomTTSMinTimer"]);
         private static int randomTTSEventChance = Convert.ToInt32(ConfigManager.config["randomTTSEventChance"]);
@@ -18,8 +18,17 @@ namespace AYAYABot.background
         private static string randomTTSRestrictedTimeStart = ConfigManager.config["randomTTSRestrictedTimeStart"];
         private static string randomTTSRestrictedTimeEnd = ConfigManager.config["randomTTSRestrictedTimeEnd"];
 
+        //Private variable that is required on class creation
+        private readonly DiscordClient client;
+
+        //Main constructor
+        public RandomTextToSpeech(DiscordClient client)
+        {
+            this.client = client;
+        }
+
         //Start of processing method
-        public static async Task RandomTTS(DiscordClient client)
+        public async Task RandomTTSBackground()
         {
             //Always surround your background threads with try catch and logging so you can see the exceptions, otherwise they don't get shown
             try
@@ -61,7 +70,7 @@ namespace AYAYABot.background
                         ulong guildId = GuildChannelManager.textChannels.ElementAt(guildNum).Key;
 
                         //Retreive the list of channels with perms from the guild
-                        List<DiscordChannel> channelsWithPerms = GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Text, client, Permissions.SendTtsMessages);
+                        List<DiscordChannel> channelsWithPerms = GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Text, Permissions.SendTtsMessages);
 
                         //TEMP adding this fix in so that at least one channel is retreived that has permissions, the permissions are not working
                         //Retreive the default text channel for the selected guild
@@ -90,7 +99,8 @@ namespace AYAYABot.background
                             //Add the ayaya emote to the message if it exists for the guild
                             if (ayayaEmote != null)
                             {
-                                messageBuilder.Content = $"{ayayaEmote} " + ttsMessage + $" {ayayaEmote}";
+                                //Only add the ayaya emote to the end as their is a TTS limit on discord and we don't want to cut out any of the actual message
+                                messageBuilder.Content = ttsMessage + $" {ayayaEmote}";
                             }
                             else
                             {

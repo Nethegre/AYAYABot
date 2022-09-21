@@ -127,6 +127,62 @@ namespace AYAYABot.events
             }
         }
 
+        //Method that is activated when a channel is updated
+        public static async Task channelUpdatedEvent(DiscordClient client, ChannelUpdateEventArgs eventArgs)
+        {
+            //Check the type of channel
+            if (eventArgs.ChannelAfter.Type == ChannelType.Text)
+            {
+                log.info("Text channel updated [" + eventArgs.ChannelAfter.Id + "] in guild [" + eventArgs.Guild.Id + "]");
+
+                //Check if the guild already exists in the channel dictionary
+                if (textChannels.ContainsKey(eventArgs.Guild.Id))
+                {
+                    //Check to see if the channel is already in the list
+                    if (textChannels[eventArgs.Guild.Id].Contains(eventArgs.ChannelBefore))
+                    {
+                        //Replace the channel value
+                        textChannels[eventArgs.Guild.Id][textChannels[eventArgs.Guild.Id].IndexOf(eventArgs.ChannelBefore)] = eventArgs.ChannelAfter;
+                    }
+                    else
+                    {
+                        //Add the channel to the list
+                        textChannels[eventArgs.Guild.Id].Add(eventArgs.ChannelAfter);
+                    }
+                }
+                else
+                {
+                    //Create new dictionary entry for the guild
+                    textChannels.Add(eventArgs.Guild.Id, new List<DiscordChannel> { eventArgs.ChannelAfter });
+                }
+            }
+            else if (eventArgs.ChannelAfter.Type == ChannelType.Voice)
+            {
+                log.info("Voice channel updated [" + eventArgs.ChannelAfter.Id + "] in guild [" + eventArgs.Guild.Id + "]");
+
+                //Check if the guild already exists in the channel dictionary
+                if (voiceChannels.ContainsKey(eventArgs.Guild.Id))
+                {
+                    //Check to see if the channel is already in the list
+                    if (voiceChannels[eventArgs.Guild.Id].Contains(eventArgs.ChannelBefore))
+                    {
+                        //Replace the channel value
+                        voiceChannels[eventArgs.Guild.Id][voiceChannels[eventArgs.Guild.Id].IndexOf(eventArgs.ChannelBefore)] = eventArgs.ChannelAfter;
+                    }
+                    else
+                    {
+                        //Add the channel to the list
+                        voiceChannels[eventArgs.Guild.Id].Add(eventArgs.ChannelAfter);
+                    }
+                }
+                else
+                {
+                    //Create new dictionary entry for the guild
+                    voiceChannels.Add(eventArgs.Guild.Id, new List<DiscordChannel> { eventArgs.ChannelAfter });
+                }
+            }
+        }
+
         //Method that is activated when a channel is deleted
         public static async Task channelDeletedEvent(DiscordClient client, ChannelDeleteEventArgs eventArgs)
         {
@@ -348,7 +404,7 @@ namespace AYAYABot.events
             return response;
         }
 
-        public static List<DiscordChannel> retrieveDiscordChannelsByTypeGuildIdAndPerms(ulong id, ChannelType type, DiscordClient client, Permissions requiredPerms)
+        public static List<DiscordChannel> retrieveDiscordChannelsByTypeGuildIdAndPerms(ulong id, ChannelType type, Permissions requiredPerms)
         {
             //TODO The permissions checking is not working although I am using the recommended permission comparison method
 

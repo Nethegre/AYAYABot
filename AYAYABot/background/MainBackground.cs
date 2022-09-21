@@ -15,6 +15,8 @@ namespace AYAYABot.background
         //Variable that is used to tell the background thread starter that the guild download is completed and that the threads are ready for processing
         private static bool readyForBackground = false;
 
+        private static int backgroundThreadSleep = Convert.ToInt32(ConfigManager.config["backgroundThreadSleep"]);
+
         //Method to set the readyForBackground to true, should only be called by the GuildDownloadCompletedManager
         public static void readyForBackgroundTrue()
         {
@@ -45,9 +47,39 @@ namespace AYAYABot.background
             log.info("Starting to create background threads.");
 
             //Startup the background tasks and add them to the list of backgroundTasks
-            backgroundThreads.Add(RandomTextToSpeech.RandomTTS(client));
+            backgroundThreads.Add(Task.Run(new RandomTextToSpeech(client).RandomTTSBackground));
+            backgroundThreads.Add(Task.Run(new JoinVoiceChannel(client).RandomVoiceJoin));
 
-            //TODO Start a background thread to keep track of background threads that are completed
+            //Start a loop to keep track of background threads that are completed
+            while (!shutdown)
+            {
+                //Keep track of all the threads to remove
+                List<int> threadsToRemove = new List<int>();
+
+                //Loop through all the background threads by getting their number so that we can modify the thread list
+                for(int i = 0; i < backgroundThreads.Count; i++)
+                {
+                    Task t = backgroundThreads[i];
+
+                    //Check if the thread is in a shutdown state
+                    if (shutdownStates.Contains(t.Status))
+                    {
+                        //Release thread resources and remove it from the list
+                        log.info("Found background thread [" + t.Id + "] in shutdown state [" + t.Status + "] , removing from background threads list.");
+                        t.Dispose();
+                        threadsToRemove.Add(i);
+                    }
+                }
+
+                //Remove the threads here
+                foreach(int threadNum in threadsToRemove)
+                {
+                    backgroundThreads.RemoveAt(threadNum);
+                }
+
+                //Sleep for designated amount of time before checking the threads again
+                Thread.Sleep(backgroundThreadSleep);
+            }
 
         }
 
