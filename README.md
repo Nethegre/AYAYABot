@@ -2,12 +2,11 @@
 The AYAYABot is designed to add some cutsey anime action to your discord server.
 ## Features
 - The bot will interact with chat messages by sending emotes on messages with AYAYA related words.
-- The bot will send random TTS enabled messages to the default text channel on the server.
+- The bot will send random TTS enabled messages to random text channels on the server.
 - The bot will greet new people that join the discord server with a welcom message and AYAYA emotes.
 - The bot will randomly join voice channels and "say" cute things.
 ## Known Issues
-- Permissions are not working correctly with the DSharpPlus libraries so the bot can't determine if it has permissions to join voice channels or send messages in text channels.
-  - I plan on getting permissions working if I can figure out the DSharpPlus library
+- No known issues at this time, feel free to create an issue if you find one.
 ## Running The Bot
 - You will need to create a discord application/bot before you can run the bot : https://discord.com/developers/docs/getting-started
 - Through the bot creation process you will create a token used for authentication, you will need to create the file "bottoken.txt" and place it in the main directory for the bot. The code will use that file in order to authenticate against Discord.
