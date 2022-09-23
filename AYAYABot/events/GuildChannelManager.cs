@@ -420,15 +420,10 @@ namespace AYAYABot.events
                             //Loop through the text channels to determine if they have the required permissions
                             foreach (DiscordChannel c in textChannels[id])
                             {
-                                //Verify that the permissions are not null
-                                if (c.UserPermissions != null)
+                                //Check the permissions of the channel for the current user (the bot)
+                                if (c.PermissionsFor(c.Guild.CurrentMember).HasPermission(requiredPerms)) //This is the suggested way to calculate permissions according to the devs on discord
                                 {
-                                    Permissions perms = c.PermissionsFor(c.Guild.CurrentMember);
-
-                                    if (perms.HasPermission(requiredPerms))
-                                    {
-                                        response.Add(c);
-                                    }
+                                    response.Add(c);
                                 }
                             }
                         }
@@ -447,15 +442,10 @@ namespace AYAYABot.events
                             //Loop through the voice channels to determine if they have the required permissions
                             foreach (DiscordChannel c in voiceChannels[id])
                             {
-                                //Verify that the permissions are not null
-                                if (c.UserPermissions != null)
+                                //Check the permissions of the channel for the current user (the bot)
+                                if (c.PermissionsFor(c.Guild.CurrentMember).HasPermission(requiredPerms)) //This is the suggested way to calculate permissions according to the devs on discord
                                 {
-                                    Permissions perms = c.PermissionsFor(c.Guild.CurrentMember);
-
-                                    if (perms.HasPermission(requiredPerms))
-                                    {
-                                        response.Add(c);
-                                    }
+                                    response.Add(c);
                                 }
                             }
                         }

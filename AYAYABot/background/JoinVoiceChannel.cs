@@ -129,8 +129,8 @@ namespace AYAYABot.background
             foreach (ulong guildId in GuildChannelManager.voiceChannels.Keys)
             {
                 //Loop through all of the voice channels that have permissions
-                //foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Voice, Permissions.Speak))
-                foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeAndGuildId(guildId, ChannelType.Voice)) //Retreiving all voice channels because permissions don't work
+                foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Voice, Permissions.Speak))
+                //foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeAndGuildId(guildId, ChannelType.Voice)) //Retreiving all voice channels because permissions don't work
                 {
                     //Check if the voiceChannel has people in it
                     if (voiceChannel.Users.Count > 0) //TODO not sure if this does a live pull from the discord API

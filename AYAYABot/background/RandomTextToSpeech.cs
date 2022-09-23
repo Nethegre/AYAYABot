@@ -74,8 +74,8 @@ namespace AYAYABot.background
 
                         //TEMP adding this fix in so that at least one channel is retreived that has permissions, the permissions are not working
                         //Retreive the default text channel for the selected guild
-                        DiscordChannel tempChannel = GuildChannelManager.defaultTextChannels[guildId];
-                        channelsWithPerms.Add(tempChannel);
+                        //DiscordChannel tempChannel = GuildChannelManager.defaultTextChannels[guildId];
+                        //channelsWithPerms.Add(tempChannel);
 
                         //Check if the guild has any channels with the correct permissions
                         if (channelsWithPerms.Count > 0)
