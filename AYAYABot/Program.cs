@@ -67,6 +67,9 @@ namespace AYAYABot
             //If this bot is removed from a discord channel run this
             _client.GuildDeleted += GuildCreatedDeletedEventManager.guildDeletedEvent;
 
+            //If a user joins a voice channel trigger run this
+            _client.VoiceStateUpdated += VoiceChannelJoinEventHandler.VoiceServerUpdated;
+
             //End lambda events ----------------------------------------------------------
 
             //Wait for the discord connection to happen

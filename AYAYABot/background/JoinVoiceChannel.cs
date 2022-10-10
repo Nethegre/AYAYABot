@@ -19,6 +19,7 @@ namespace AYAYABot.background
         private static int voiceJoinSpeakDelay = Convert.ToInt32(ConfigManager.config["voiceJoinSpeakDelay"]);
         private static int voiceJoinJoinDelay = Convert.ToInt32(ConfigManager.config["voiceJoinJoinDelay"]);
         private static string[] voiceJoinMessageResource = ConfigManager.getConfigList("voiceJoinMessageResource");
+        private static string[] papiHelloMessageResource = ConfigManager.getConfigList("papiHelloMessageResource");
 
         //Discord client private variable
         private readonly DiscordClient client;
@@ -35,7 +36,7 @@ namespace AYAYABot.background
             //Always surround your background threads with try catch and logging so you can see the exceptions, otherwise they don't get shown
             try
             {
-                //Log the start of the random TTS task
+                //Log the start of the random voice join task
                 log.info("Starting the random voice join process");
 
                 //Loop till the shutdown bool tells the process to stop
@@ -77,8 +78,6 @@ namespace AYAYABot.background
                             //Join the voice channel
                             VoiceNextConnection vCon = await voiceChannel.ConnectAsync();
 
-                            log.info("Connected to voice channel, sleeping before playing audio.");
-
                             //Wait configured amount of time before sending the audio
                             Thread.Sleep(voiceJoinSpeakDelay);
 
@@ -100,6 +99,8 @@ namespace AYAYABot.background
 
                             //Disconnect from the voice channel
                             vCon.Disconnect();
+
+                            log.info("Completed random voice join process.");
                         }
                     }
                     else
@@ -157,6 +158,54 @@ namespace AYAYABot.background
             }
 
             return foundPersonInVoiceChannel;
+        }
+
+        public static async Task JoinOwnerVoiceChannel(DiscordChannel voiceChannel)
+        {
+            //Log the start of the hello task
+            log.info("Starting the hello papi voice join");
+
+            try
+            {
+                //Verify that the voice channel retreived is not null
+                if (voiceChannel != null)
+                {
+                    //Join the voice channel
+                    VoiceNextConnection vCon = await voiceChannel.ConnectAsync();
+
+                    //Wait configured amount of time before sending the audio
+                    Thread.Sleep(voiceJoinSpeakDelay);
+
+                    //Retreive random audio file name
+                    int audioFileNum = new Random().Next(papiHelloMessageResource.Count());
+
+                    //Retreive the actual stream from the resource manager
+                    Stream audioFile = ResourceManager.retrieveResource(papiHelloMessageResource[audioFileNum]);
+
+                    //Get the transmit sink
+                    using (VoiceTransmitSink transmit = vCon.GetTransmitSink())
+                    {
+                        //Play the audio over the transmit sink
+                        await audioFile.CopyToAsync(transmit);
+                    }
+
+                    //Wait configured amount of time before disconnecting from the channel
+                    Thread.Sleep(voiceJoinJoinDelay);
+
+                    //Disconnect from the voice channel
+                    vCon.Disconnect();
+
+                    log.info("Completed papi hello voice join process.");
+                }
+                else
+                {
+                    log.error("The retreived voice channel that is supposed to have papi in it was null.");
+                }
+             }
+            catch (Exception ex)
+            {
+                log.error("Exception while executing the hello papi voice join process [" + ex.Message + "]");
+            }
         }
 
     }
