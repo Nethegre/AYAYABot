@@ -4,4 +4,4 @@ DONE 1. Read chat messages and react to mentions of ayaya words with the ayaya e
 NEEDS TESTING 2. Greet new people that join the server with an AYAYA message @ing them as well as using the AYAYA emotes/potentially the AYAYA image
 DONE 3. Spontaneously add /tts messages into chats it has permissions for saying AYAYA stuff
 DONE 4. Spontaneously join voice chats and play AYAYA audio
-IN PROGRESS 5. Whenever the bot owner joins a voice channel have the bot join the channel and say something
+NEEDS TESTING 5. Whenever the bot owner joins a voice channel have the bot join the channel and say something

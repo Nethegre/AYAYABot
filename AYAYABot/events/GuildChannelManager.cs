@@ -406,8 +406,6 @@ namespace AYAYABot.events
 
         public static List<DiscordChannel> retrieveDiscordChannelsByTypeGuildIdAndPerms(ulong id, ChannelType type, Permissions requiredPerms)
         {
-            //TODO The permissions checking is not working although I am using the recommended permission comparison method
-
             List<DiscordChannel> response = new List<DiscordChannel>();
 
             switch (type)

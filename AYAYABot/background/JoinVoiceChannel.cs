@@ -133,7 +133,7 @@ namespace AYAYABot.background
                 foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Voice, Permissions.Speak))
                 {
                     //Check if the voiceChannel has people in it
-                    if (voiceChannel.Users.Count > 0) //TODO not sure if this does a live pull from the discord API
+                    if (voiceChannel.Users.Count > 0)
                     {
                         //Add this channel to the list of channels with people in them
                         voiceChannelsWPeopleInThem.Add(voiceChannel);

@@ -52,7 +52,7 @@ namespace AYAYABot
             //If a discord channel is removed run this
             _client.ChannelDeleted += GuildChannelManager.channelDeletedEvent;
 
-            //TODO Add event to update channel list when a channels permissions are updated
+            //If a discord channel is updated run this
             _client.ChannelUpdated += GuildChannelManager.channelUpdatedEvent;
 
             //Run our custom message created event handler
