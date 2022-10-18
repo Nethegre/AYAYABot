@@ -34,7 +34,7 @@ namespace AYAYABot.events
                             log.info("Voice channel change for server owner that is triggering hello sequence.");
 
                             //Call the JoinVoiceChannel to run the hello sequence
-                            await JoinVoiceChannel.JoinOwnerVoiceChannel(eventArgs.After.Channel);
+                            MainBackground.AddBackgroundThread(JoinVoiceChannel.JoinOwnerVoiceChannel(eventArgs.After.Channel));
                         }
                     }
                 }

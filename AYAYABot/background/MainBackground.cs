@@ -1,5 +1,6 @@
 ﻿using DSharpPlus;
 using AYAYABot.util;
+using System.Collections.Concurrent;
 
 namespace AYAYABot.background
 {
@@ -23,8 +24,8 @@ namespace AYAYABot.background
             readyForBackground = true;
         }
 
-        //List of background tasks to keep track of
-        private static List<Task> backgroundThreads = new List<Task>();
+        //List of background tasks to keep track of, concurrent bag is supposedly thread safe
+        private static ConcurrentBag<Task> backgroundThreads = new ConcurrentBag<Task>();
 
         //Create list of valid "shutdown" states for background threads
         private static TaskStatus[] shutdownStates = new TaskStatus[] { TaskStatus.Faulted, TaskStatus.RanToCompletion, TaskStatus.Canceled };
@@ -35,7 +36,7 @@ namespace AYAYABot.background
             return shutdown;
         }
 
-        //Main method to startup background processes
+        //Main method to startup static background processes
         public static async Task Startup(DiscordClient client)
         {
             //Wait till the readyForBackground flag to be true before starting background threads
@@ -46,7 +47,7 @@ namespace AYAYABot.background
 
             log.info("Starting to create background threads.");
 
-            //Startup the background tasks and add them to the list of backgroundTasks
+            //Startup the static background tasks and add them to the list of backgroundTasks
             backgroundThreads.Add(Task.Run(new RandomTextToSpeech(client).RandomTTSBackground));
             backgroundThreads.Add(Task.Run(new JoinVoiceChannel(client).RandomVoiceJoin));
 
@@ -59,7 +60,7 @@ namespace AYAYABot.background
                 //Loop through all the background threads by getting their number so that we can modify the thread list
                 for(int i = 0; i < backgroundThreads.Count; i++)
                 {
-                    Task t = backgroundThreads[i];
+                    Task t = backgroundThreads.ElementAt(i);
 
                     //Check if the thread is in a shutdown state
                     if (shutdownStates.Contains(t.Status))
@@ -74,7 +75,9 @@ namespace AYAYABot.background
                 //Remove the threads here
                 foreach(int threadNum in threadsToRemove)
                 {
-                    backgroundThreads.RemoveAt(threadNum);
+                    List<Task> replacement = new List<Task> (backgroundThreads.ToArray());
+                    replacement.RemoveAt(threadNum);
+                    backgroundThreads = new ConcurrentBag<Task>(replacement);
                 }
 
                 //Sleep for designated amount of time before checking the threads again
@@ -114,6 +117,30 @@ namespace AYAYABot.background
             }
         }
 
+        //Main methods to add to the background threads
+        public static void AddBackgroundThread(Action task)
+        {
+            if (!shutdown)
+            {
+                backgroundThreads.Add(Task.Run(task));
+            }
+            else
+            {
+                log.warn("Attempted to start a background action [" + task.Target.GetType().Name + "." + task.Method.Name + "] while shutdown is true.");
+            }
+        }
+
+        public static void AddBackgroundThread(Task task)
+        {
+            if (!shutdown)
+            {
+                backgroundThreads.Add(task);
+            }
+            else
+            {
+                log.warn("Attempted to start a background task [" + task.Id + "] while shutdown is true.");
+            }
+        }
 
     }
 }
