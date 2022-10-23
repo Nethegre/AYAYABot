@@ -31,6 +31,9 @@
     <None Update="resources\ayaya.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="resources\baited.wav">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="resources\niconico.wav">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

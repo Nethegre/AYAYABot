@@ -25,7 +25,7 @@ namespace AYAYABot.background
         }
 
         //List of background tasks to keep track of, concurrent bag is supposedly thread safe
-        private static ConcurrentBag<Task> backgroundThreads = new ConcurrentBag<Task>();
+        private static ConcurrentQueue<Task> backgroundThreads = new ConcurrentQueue<Task>();
 
         //Create list of valid "shutdown" states for background threads
         private static TaskStatus[] shutdownStates = new TaskStatus[] { TaskStatus.Faulted, TaskStatus.RanToCompletion, TaskStatus.Canceled };
@@ -47,73 +47,85 @@ namespace AYAYABot.background
 
             log.info("Starting to create background threads.");
 
-            //Startup the static background tasks and add them to the list of backgroundTasks
-            backgroundThreads.Add(Task.Run(new RandomTextToSpeech(client).RandomTTSBackground));
-            backgroundThreads.Add(Task.Run(new JoinVoiceChannel(client).RandomVoiceJoin));
-
-            //Start a loop to keep track of background threads that are completed
-            while (!shutdown)
+            try
             {
-                //Keep track of all the threads to remove
-                List<int> threadsToRemove = new List<int>();
-
-                //Loop through all the background threads by getting their number so that we can modify the thread list
-                for(int i = 0; i < backgroundThreads.Count; i++)
-                {
-                    Task t = backgroundThreads.ElementAt(i);
-
-                    //Check if the thread is in a shutdown state
-                    if (shutdownStates.Contains(t.Status))
-                    {
-                        //Release thread resources and remove it from the list
-                        log.info("Found background thread [" + t.Id + "] in shutdown state [" + t.Status + "] , removing from background threads list.");
-                        t.Dispose();
-                        threadsToRemove.Add(i);
-                    }
-                }
-
-                //Remove the threads here
-                foreach(int threadNum in threadsToRemove)
-                {
-                    List<Task> replacement = new List<Task> (backgroundThreads.ToArray());
-                    replacement.RemoveAt(threadNum);
-                    backgroundThreads = new ConcurrentBag<Task>(replacement);
-                }
-
-                //Sleep for designated amount of time before checking the threads again
-                Thread.Sleep(backgroundThreadSleep);
+                //Startup the static background tasks and add them to the list of backgroundTasks
+                backgroundThreads.Enqueue(Task.Run(new RandomTextToSpeech(client).RandomTTSBackground));
+                backgroundThreads.Enqueue(Task.Run(new JoinVoiceChannel().RandomVoiceJoin));
+            }
+            catch (Exception ex)
+            {
+                log.error("Exception while starting background threads [" + ex.Message + "]");
             }
 
+            try
+            {
+                //Start a loop to keep track of background threads that are completed
+                while (!shutdown)
+                {
+                    //Try to dequeue each item
+                    if (backgroundThreads.TryDequeue(out Task task))
+                    {
+                        //check if the thread is in a shutdown state
+                        if (shutdownStates.Contains(task.Status))
+                        {
+                            //If it is in a shutdown state log and dispose of it
+                            log.info("Found background thread [" + task.Id + "] in shutdown state [" + task.Status + "] , removing from background threads list.");
+                        }
+                        else
+                        {
+                            //If it is not in a shutdown state than requeue the thread
+                            backgroundThreads.Enqueue(task);
+                        }
+                    }
+                    else
+                    {
+                        //Sleep for designated amount of time before checking the thread queue again
+                        Thread.Sleep(backgroundThreadSleep);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.error("Exception while maintaining background tasks [" + ex.Message + "]");
+            }
         }
 
         //Main method to shutdown background processes
         public static void Shutdown()
         {
-            //Retrieve the shutdown timer from config
-            int shutdownTimer = Convert.ToInt32(ConfigManager.config["backgroundThreadShutdownTimer"]);
-
-            //Set the shutdown bool to true
-            shutdown = true;
-
-            //Sleep for the shutdownTimer length
-            Thread.Sleep(shutdownTimer);
-
-            //Loop through the background threads
-            foreach (Task thread in backgroundThreads)
+            try
             {
-                //Check if the thread is in a shutdown state
-                if (!shutdownStates.Contains(thread.Status))
+                //Retrieve the shutdown timer from config
+                int shutdownTimer = Convert.ToInt32(ConfigManager.config["backgroundThreadShutdownTimer"]);
+
+                //Set the shutdown bool to true
+                shutdown = true;
+
+                //Sleep for the shutdownTimer length
+                Thread.Sleep(shutdownTimer);
+
+                //Loop through the background threads
+                foreach (Task thread in backgroundThreads)
                 {
-                    //The thread is not considered shutdown so we need to shut it down
-                    try
+                    //Check if the thread is in a shutdown state
+                    if (!shutdownStates.Contains(thread.Status))
                     {
-                        thread.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        log.error("Exception while shutting down background thread [" + ex.Message + "]");
+                        //The thread is not considered shutdown so we need to shut it down
+                        try
+                        {
+                            thread.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            log.error("Exception while shutting down background thread [" + ex.Message + "]");
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                log.error("Exception while attempting to shutdown background threads [" + ex.Message + "]");
             }
         }
 
@@ -122,7 +134,7 @@ namespace AYAYABot.background
         {
             if (!shutdown)
             {
-                backgroundThreads.Add(Task.Run(task));
+                backgroundThreads.Enqueue(Task.Run(task));
             }
             else
             {
@@ -134,7 +146,7 @@ namespace AYAYABot.background
         {
             if (!shutdown)
             {
-                backgroundThreads.Add(task);
+                backgroundThreads.Enqueue(task);
             }
             else
             {

@@ -22,64 +22,70 @@ namespace AYAYABot
 
         static async Task MainAsync()
         {
+            try
+            {
+                //Create the discord config
+                DiscordConfiguration discordConfig = new DiscordConfiguration();
 
-            //Create the discord config
-            DiscordConfiguration discordConfig = new DiscordConfiguration();
+                //Retrieve the auth token here
+                discordConfig.Token = LoadBotToken.loadBotTokenFromFile();
+                discordConfig.TokenType = TokenType.Bot;
+                //Not sure if we need to change the intents in the future
+                discordConfig.Intents = DiscordIntents.AllUnprivileged;
 
-            //Retrieve the auth token here
-            discordConfig.Token = LoadBotToken.loadBotTokenFromFile();
-            discordConfig.TokenType = TokenType.Bot;
-            //Not sure if we need to change the intents in the future
-            discordConfig.Intents = DiscordIntents.AllUnprivileged;
+                //Create the discord client based on the config
+                _client = new DiscordClient(discordConfig);
 
-            //Create the discord client based on the config
-            _client = new DiscordClient(discordConfig);
+                //Enable the voice next libraries
+                _client.UseVoiceNext();
 
-            //Enable the voice next libraries
-            _client.UseVoiceNext();
+                //Add lambda events below ----------------------------------------------------
 
-            //Add lambda events below ----------------------------------------------------
+                //Once the guild download has completed we are able to gather the emotes from the guilds
+                _client.GuildDownloadCompleted += GuildDownloadCompletedManager.GuildDownloadCompleted;
 
-            //Once the guild download has completed we are able to gather the emotes from the guilds
-            _client.GuildDownloadCompleted += GuildDownloadCompletedManager.GuildDownloadCompleted;
+                //If a discord emoji is updated send it to the emote gatherer
+                _client.GuildEmojisUpdated += GuildEmoteManager.updateGuildEmojis;
 
-            //If a discord emoji is updated send it to the emote gatherer
-            _client.GuildEmojisUpdated += GuildEmoteManager.updateGuildEmojis;
+                //If a discord channel is added/updated run this
+                _client.ChannelCreated += GuildChannelManager.channelCreatedEvent;
 
-            //If a discord channel is added/updated run this
-            _client.ChannelCreated += GuildChannelManager.channelCreatedEvent;
+                //If a discord channel is removed run this
+                _client.ChannelDeleted += GuildChannelManager.channelDeletedEvent;
 
-            //If a discord channel is removed run this
-            _client.ChannelDeleted += GuildChannelManager.channelDeletedEvent;
+                //If a discord channel is updated run this
+                _client.ChannelUpdated += GuildChannelManager.channelUpdatedEvent;
 
-            //If a discord channel is updated run this
-            _client.ChannelUpdated += GuildChannelManager.channelUpdatedEvent;
+                //Run our custom message created event handler
+                _client.MessageCreated += MessageCreatedEventHandler.messageCreated;
 
-            //Run our custom message created event handler
-            _client.MessageCreated += MessageCreatedEventHandler.messageCreated;
+                //Run the welcome event when a guild member is added
+                _client.GuildMemberAdded += GuildMemberAddedEventHandler.welcomeNewGuildMember;
 
-            //Run the welcome event when a guild member is added
-            _client.GuildMemberAdded += GuildMemberAddedEventHandler.welcomeNewGuildMember;
+                //If this bot is added to a discord channel run this
+                _client.GuildCreated += GuildCreatedDeletedEventManager.guildCreatedEvent;
 
-            //If this bot is added to a discord channel run this
-            _client.GuildCreated += GuildCreatedDeletedEventManager.guildCreatedEvent;
+                //If this bot is removed from a discord channel run this
+                _client.GuildDeleted += GuildCreatedDeletedEventManager.guildDeletedEvent;
 
-            //If this bot is removed from a discord channel run this
-            _client.GuildDeleted += GuildCreatedDeletedEventManager.guildDeletedEvent;
+                //If a user joins a voice channel trigger run this
+                _client.VoiceStateUpdated += VoiceChannelJoinEventHandler.VoiceServerUpdated;
 
-            //If a user joins a voice channel trigger run this
-            _client.VoiceStateUpdated += VoiceChannelJoinEventHandler.VoiceServerUpdated;
+                //End lambda events ----------------------------------------------------------
 
-            //End lambda events ----------------------------------------------------------
+                //Wait for the discord connection to happen
+                await _client.ConnectAsync();
 
-            //Wait for the discord connection to happen
-            await _client.ConnectAsync();
+                //Start background processes
+                await MainBackground.Startup(_client);
 
-            //Start background processes
-            await MainBackground.Startup(_client);
-
-            //Allow this thread to go into the background
-            await Task.Delay(-1);
+                //Allow this thread to go into the background
+                await Task.Delay(-1);
+            }
+            catch (Exception ex)
+            {
+                log.error("Exception while executing main process [" + ex.Message + "]");
+            }
         }
 
         //This method will be used to shutdown the bot

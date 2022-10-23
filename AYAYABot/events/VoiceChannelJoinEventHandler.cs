@@ -19,25 +19,32 @@ namespace AYAYABot.events
         //This method is called whenever a user joins/leaves/moves voice channels
         public static async Task VoiceServerUpdated(DiscordClient client, VoiceStateUpdateEventArgs eventArgs)
         {
-            //Check if the user involved in the eventArgs is the bot owner
-            if (eventArgs.User.Id == ownerGuid)
+            try
             {
-                //Check if the lastPapiHello is less than or equal too the current time plus the papiHelloDelayMs
-                if (lastPapiHello <= DateTime.Now.AddMilliseconds(papiHelloDelayMs))
+                //Check if the user involved in the eventArgs is the bot owner
+                if (eventArgs.User.Id == ownerGuid)
                 {
-                    //Check to make sure that After channel is not null
-                    if (eventArgs.After != null)
+                    //Check if the lastPapiHello is less than or equal too the current time plus the papiHelloDelayMs
+                    if (lastPapiHello <= DateTime.Now.AddMilliseconds(papiHelloDelayMs))
                     {
-                        //Check if the event was triggered by the owner joining a voice channel by checking if "Before.Channel" is different from "After.Channel"
-                        if (eventArgs.Before == null || eventArgs.Before.Channel.Id != eventArgs.After.Channel.Id)
+                        //Check to make sure that After channel is not null
+                        if (eventArgs.After != null)
                         {
-                            log.info("Voice channel change for server owner that is triggering hello sequence.");
+                            //Check if the event was triggered by the owner joining a voice channel by checking if "Before.Channel" is different from "After.Channel"
+                            if (eventArgs.Before == null || eventArgs.Before.Channel.Id != eventArgs.After.Channel.Id)
+                            {
+                                log.info("Voice channel change for server owner that is triggering hello sequence.");
 
-                            //Call the JoinVoiceChannel to run the hello sequence
-                            MainBackground.AddBackgroundThread(JoinVoiceChannel.JoinOwnerVoiceChannel(eventArgs.After.Channel));
+                                //Call the JoinVoiceChannel to run the hello sequence
+                                MainBackground.AddBackgroundThread(JoinVoiceChannel.JoinOwnerVoiceChannel(eventArgs.After.Channel));
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                log.error("Exception while handling voice state update event [" + ex.Message + "]");
             }
         }
 

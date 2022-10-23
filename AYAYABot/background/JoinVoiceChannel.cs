@@ -18,17 +18,11 @@ namespace AYAYABot.background
         private static int voiceJoinPollTimer = Convert.ToInt32(ConfigManager.config["voiceJoinPollTimer"]);
         private static int voiceJoinSpeakDelay = Convert.ToInt32(ConfigManager.config["voiceJoinSpeakDelay"]);
         private static int voiceJoinJoinDelay = Convert.ToInt32(ConfigManager.config["voiceJoinJoinDelay"]);
+        private static int papiHelloCooldown = Convert.ToInt32(ConfigManager.config["papiHelloCooldown"]);
         private static string[] voiceJoinMessageResource = ConfigManager.getConfigList("voiceJoinMessageResource");
         private static string[] papiHelloMessageResource = ConfigManager.getConfigList("papiHelloMessageResource");
-
-        //Discord client private variable
-        private readonly DiscordClient client;
-
-        //Main constructor
-        public JoinVoiceChannel(DiscordClient client)
-        {
-            this.client = client;
-        }
+        private static bool currentPapiHello = false;
+        private static DateTime lastPapiHello = DateTime.Now.AddMilliseconds(-papiHelloCooldown);
 
         //Start of processing method
         public async Task RandomVoiceJoin()
@@ -120,41 +114,49 @@ namespace AYAYABot.background
             //Found person is default false
             bool foundPersonInVoiceChannel = false;
 
-            //Channel is also default null
-            channel = null;
-
-            //Retreive voice channels that have speak permissions from 
-            List<DiscordChannel> voiceChannelsWPeopleInThem = new List<DiscordChannel>();
-
-            //Loop through all of the guilds
-            foreach (ulong guildId in GuildChannelManager.voiceChannels.Keys)
+            try
             {
-                //Loop through all of the voice channels that have permissions
-                foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Voice, Permissions.Speak))
+                //Channel is also default null
+                channel = null;
+
+                //Retreive voice channels that have speak permissions from 
+                List<DiscordChannel> voiceChannelsWPeopleInThem = new List<DiscordChannel>();
+
+                //Loop through all of the guilds
+                foreach (ulong guildId in GuildChannelManager.voiceChannels.Keys)
                 {
-                    //Check if the voiceChannel has people in it
-                    if (voiceChannel.Users.Count > 0)
+                    //Loop through all of the voice channels that have permissions
+                    foreach (DiscordChannel voiceChannel in GuildChannelManager.retrieveDiscordChannelsByTypeGuildIdAndPerms(guildId, ChannelType.Voice, Permissions.Speak))
                     {
-                        //Add this channel to the list of channels with people in them
-                        voiceChannelsWPeopleInThem.Add(voiceChannel);
+                        //Check if the voiceChannel has people in it
+                        if (voiceChannel.Users.Count > 0)
+                        {
+                            //Add this channel to the list of channels with people in them
+                            voiceChannelsWPeopleInThem.Add(voiceChannel);
+                        }
                     }
                 }
+
+                //If the list of voiceChannelsWPeople in them is greater than 0, than pull one out a random
+                if (voiceChannelsWPeopleInThem.Count > 0)
+                {
+                    foundPersonInVoiceChannel = true;
+
+                    Random random = new Random();
+
+                    int vInt = random.Next(voiceChannelsWPeopleInThem.Count);
+
+                    channel = voiceChannelsWPeopleInThem[vInt];
+                }
+                else
+                {
+                    log.debug("Failed to find any voice channels with people in them.");
+                }
             }
-
-            //If the list of voiceChannelsWPeople in them is greater than 0, than pull one out a random
-            if (voiceChannelsWPeopleInThem.Count > 0)
+            catch (Exception ex)
             {
-                foundPersonInVoiceChannel = true;
-
-                Random random = new Random();
-
-                int vInt = random.Next(voiceChannelsWPeopleInThem.Count);
-
-                channel = voiceChannelsWPeopleInThem[vInt];
-            }
-            else
-            {
-                log.debug("Failed to find any voice channels with people in them.");
+                channel = null;
+                log.error("Exception while attempting to retreive voice channels with people in them [" + ex.Message + "]");
             }
 
             return foundPersonInVoiceChannel;
@@ -165,46 +167,71 @@ namespace AYAYABot.background
             //Log the start of the hello task
             log.info("Starting the hello papi voice join");
 
-            try
+            //Check if the papiHello event is currently on "cooldown" based on the papiHelloCooldown config variable
+            if (DateTime.Now.AddMilliseconds(-papiHelloCooldown) > lastPapiHello)
             {
-                //Verify that the voice channel retreived is not null
-                if (voiceChannel != null)
+                //Check if there is a current papiHello going on
+                if (!currentPapiHello)
                 {
-                    //Join the voice channel
-                    VoiceNextConnection vCon = await voiceChannel.ConnectAsync();
+                    currentPapiHello = true; //Set currentPapiHello to true so that other papi events can't happen while this one is happening
 
-                    //Wait configured amount of time before sending the audio
-                    Thread.Sleep(voiceJoinSpeakDelay);
-
-                    //Retreive random audio file name
-                    int audioFileNum = new Random().Next(papiHelloMessageResource.Count());
-
-                    //Retreive the actual stream from the resource manager
-                    Stream audioFile = ResourceManager.retrieveResource(papiHelloMessageResource[audioFileNum]);
-
-                    //Get the transmit sink
-                    using (VoiceTransmitSink transmit = vCon.GetTransmitSink())
+                    try
                     {
-                        //Play the audio over the transmit sink
-                        await audioFile.CopyToAsync(transmit);
+                        //Verify that the voice channel retreived is not null
+                        if (voiceChannel != null)
+                        {
+                            //Join the voice channel
+                            VoiceNextConnection vCon = await voiceChannel.ConnectAsync();
+
+                            //Wait configured amount of time before sending the audio
+                            Thread.Sleep(voiceJoinSpeakDelay);
+
+                            //Retreive random audio file name
+                            int audioFileNum = new Random().Next(papiHelloMessageResource.Count());
+
+                            //Retreive the actual stream from the resource manager
+                            Stream audioFile = ResourceManager.retrieveResource(papiHelloMessageResource[audioFileNum]);
+
+                            //Get the transmit sink
+                            using (VoiceTransmitSink transmit = vCon.GetTransmitSink())
+                            {
+                                //Play the audio over the transmit sink
+                                await audioFile.CopyToAsync(transmit);
+                            }
+
+                            //Wait configured amount of time before disconnecting from the channel
+                            Thread.Sleep(voiceJoinJoinDelay);
+
+                            //Disconnect from the voice channel
+                            vCon.Disconnect();
+
+                            log.info("Completed papi hello voice join process.");
+
+                            //Reset the papi cooldown timer [don't reset if this thread crashes]
+                            lastPapiHello = DateTime.Now;
+                        }
+                        else
+                        {
+                            log.error("The retreived voice channel that is supposed to have papi in it was null.");
+                        }
                     }
-
-                    //Wait configured amount of time before disconnecting from the channel
-                    Thread.Sleep(voiceJoinJoinDelay);
-
-                    //Disconnect from the voice channel
-                    vCon.Disconnect();
-
-                    log.info("Completed papi hello voice join process.");
+                    catch (Exception ex)
+                    {
+                        log.error("Exception while executing the hello papi event [" + ex.Message + "]");
+                    }
+                    finally
+                    {
+                        currentPapiHello = false; //Set current PapiHello to false so that other papiHello events can happen
+                    }
                 }
                 else
                 {
-                    log.error("The retreived voice channel that is supposed to have papi in it was null.");
+                    log.warn("Attempted to start a hello papi event while one was already in progress.");
                 }
-             }
-            catch (Exception ex)
+            }
+            else
             {
-                log.error("Exception while executing the hello papi voice join process [" + ex.Message + "]");
+                log.warn("Attempted to start a hello papi event while it was still on cooldown.");
             }
         }
 
