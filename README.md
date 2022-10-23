@@ -5,6 +5,7 @@ The AYAYABot is designed to add some cutsey anime action to your discord server.
 - The bot will send random TTS enabled messages to random text channels on the server.
 - The bot will greet new people that join the discord server with a welcom message and AYAYA emotes.
 - The bot will randomly join voice channels and "say" cute things.
+- The bot will join the voice channels of the owner GUID and welcome them with randomized messages.
 ## Known Issues
 - No known issues at this time, feel free to create an issue if you find one.
 ## Running The Bot
@@ -19,5 +20,6 @@ The AYAYABot is designed to add some cutsey anime action to your discord server.
 - <b>DSharpPlus</b> for providing the discord integration library : https://dsharpplus.github.io/
 - <b>Artosis</b> and his chat for giving me plenty of AYAYA inspiration : https://www.twitch.tv/artosis
 - <b>Cika</b> for providing some good audio clips
+- <b>PapaSmooth</b> for providing papi audio clips
 ## Feedback
 - If you have feedback or suggestions feel free to create an issue or message me on discord : Nethegre#2803
