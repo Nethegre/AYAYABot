@@ -52,6 +52,7 @@ namespace AYAYABot.background
                 //Startup the static background tasks and add them to the list of backgroundTasks
                 backgroundThreads.Enqueue(Task.Run(new RandomTextToSpeech(client).RandomTTSBackground));
                 backgroundThreads.Enqueue(Task.Run(new JoinVoiceChannel().RandomVoiceJoin));
+                backgroundThreads.Enqueue(LogManager.ProcessLogs());
             }
             catch (Exception ex)
             {

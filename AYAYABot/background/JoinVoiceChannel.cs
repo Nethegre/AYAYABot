@@ -150,7 +150,7 @@ namespace AYAYABot.background
                 }
                 else
                 {
-                    log.debug("Failed to find any voice channels with people in them.");
+                    log.info("Failed to find any voice channels with people in them.");
                 }
             }
             catch (Exception ex)

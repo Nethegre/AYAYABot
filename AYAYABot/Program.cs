@@ -17,6 +17,8 @@ namespace AYAYABot
 
         static void Main(string[] args)
         {
+            //Attempt to initialize the config class first
+            var temp = ConfigManager.config.GetType;
             MainAsync().GetAwaiter().GetResult();
         }
 
